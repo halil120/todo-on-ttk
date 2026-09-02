@@ -106,6 +106,7 @@ frame2 = ttk.Frame(notebook)
 root.title("Список задач")
 root.geometry("400x265+1000+500")
 root.resizable(False, True)
+root.iconbitmap(default="icon.ico")
 
 entry = ttk.Entry(frame2)
 entry.pack(anchor="nw", padx=3, pady=3)
