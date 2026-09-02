@@ -56,6 +56,7 @@ def delete_task():
     key=todo_listbox.get(index)
     delete_from_json(key)
     todo_list_var.set(read_todo())
+    update_checkpoints(checkpoints_frame)
 
 def add_task():
     text = entry.get()
@@ -63,27 +64,49 @@ def add_task():
         save_in_json(text)
     entry.delete(0, END)
     todo_list_var.set(read_todo())
+    update_checkpoints(checkpoints_frame)
+    
+
+    
+    
+def update_checkpoints(checkpoints_frame):
+    for widget in checkpoints_frame.winfo_children():
+        widget.destroy()
+    for text in read_todo():
+        enabled = IntVar()
+        Checkbutton(checkpoints_frame, text=text, variable=enabled).pack(anchor='w')
 
 root = Tk()
+notebook = ttk.Notebook()
+frame1 = ttk.Frame(notebook)
+frame2 = ttk.Frame(notebook)
 root.title("Список задач")
-root.geometry("400x250+1000+500")
+root.geometry("400x265+1000+500")
 
-entry = ttk.Entry(root)
+entry = ttk.Entry(frame2)
 entry.pack(anchor="nw", padx=3, pady=3)
 
-buttons_frame = Frame(root)
+buttons_frame = ttk.Frame(frame2)
 buttons_frame.pack(anchor="nw", padx=3, pady=3)
 
-Button(buttons_frame, text="Добавить", command=add_task).pack(side=LEFT)
-Button(buttons_frame, text="Удалить", command=delete_task).pack(side=LEFT, padx=8, pady=3)
+ttk.Button(buttons_frame, text="Добавить", command=add_task).pack(side=LEFT)
+ttk.Button(buttons_frame, text="Удалить", command=delete_task).pack(side=LEFT, padx=8, pady=3)
 
 
-todo_list = read_todo()
-todo_list_var = Variable(value=todo_list)
+todo_list_var = Variable(value=read_todo())
 
-todo_listbox = Listbox(listvariable=todo_list_var)
+todo_listbox = Listbox(frame2,listvariable=todo_list_var)
 
 todo_listbox.pack(anchor=NW, padx=3, pady=5)
+
+
+notebook.pack(expand=True, fill=BOTH)
+notebook.add(frame1, text="Отметка задач")
+notebook.add(frame2, text="Создание задач")
+
+checkpoints_frame = ttk.Frame(frame1, borderwidth=1, relief=SOLID, padding=[8, 10])
+checkpoints_frame.pack(anchor="n", fill=BOTH, expand=True)
+update_checkpoints(checkpoints_frame)
 
 
 root.mainloop()
