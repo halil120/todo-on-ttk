@@ -2,8 +2,8 @@ from tkinter import *
 from tkinter import ttk
 import json
 from pathlib import Path
-
-
+import sqlite3 as sql
+##############################################################################
 def check_todo():
     todo_path = Path("todo.json")
     if not todo_path.exists():
@@ -84,8 +84,8 @@ def toggle_status(key, var):
     todo_loaded[key] = bool(var.get())
     with open(todo_path, "w", encoding="utf-8") as file:
         json.dump(todo_loaded, file, ensure_ascii=False, indent=2)
-
-
+        
+        
 def update_checkpoints(checkpoints_frame):
     for widget in checkpoints_frame.winfo_children():
         widget.destroy()
@@ -97,7 +97,70 @@ def update_checkpoints(checkpoints_frame):
             variable=enabled,
             command=lambda t=text, v=enabled: toggle_status(t, v),
         ).pack(anchor="w")
+####################################################################################
 
+
+
+#_________________________________________________________________________________________
+def check_todo_db(cursor):
+    cursor.execute("CREATE TABLE IF NOT EXISTS todo (id INTEGER PRIMARY KEY, name TEXT NOT NULL, enable INTEGER ) ")
+    cursor.commit()
+
+def read_todo_db(cursor):
+    check_todo_db(cursor)
+    cursor.execute("SELECT name,enable FROM todo")
+    return cursor.fetchall()
+
+def text_from_todo_db(todo_list):
+    lst = []
+    for text, _ in todo_list:
+        lst.append(text)
+    return lst
+
+def add_in_db(cursor,text):
+    cursor.execute("INSERT INTO users (name, enable) VALUES (?, ?)",(text,0))
+    cursor.commit()
+
+def delete_from_db(cursor,text):
+    cursor.execute("DELETE FROM todo WHERE name = ?", (text,))
+    cursor.commit()
+
+def delete_task_db(cursor):
+    selection = todo_listbox.curselection()
+    index = selection[0]
+    key = todo_listbox.get(index)
+    delete_from_db(cursor,key)
+    todo_list_var.set(text_from_todo_db(read_todo_db(cursor)))
+    update_checkpoints(checkpoints_frame)
+
+def add_task_db(cursor):
+    text = entry.get()
+    if text:
+        add_in_db(cursor,text)
+    entry.delete(0, END)
+    todo_list_var.set(text_from_todo_db(read_todo_db(cursor)))
+    update_checkpoints(checkpoints_frame)
+
+def toggle_status_db(cursor, key, var):
+    check_todo(cursor)
+    cursor.execute("UPDATE todo SET enable = ? WHERE name = ?",(1,key))
+    cursor.commit()
+
+def update_checkpoints_db(cursor,checkpoints_frame):
+    for widget in checkpoints_frame.winfo_children():
+        widget.destroy()
+    for text, flag in read_todo_db(cursor):
+        enabled = IntVar(value=1 if flag else 0)
+        Checkbutton(
+            checkpoints_frame,
+            text=text,
+            variable=enabled,
+            command=lambda t=text, v=enabled: toggle_status_db(t, v),
+        ).pack(anchor="w")
+#_________________________________________________________________________________________
+
+
+cursor = sql.connect("todo.db")
 
 root = Tk()
 notebook = ttk.Notebook()
